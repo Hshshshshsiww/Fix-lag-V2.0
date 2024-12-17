@@ -1,0 +1,218 @@
+-- Tạo ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tạo Frame chính cho menu
+local menuFrame = Instance.new("Frame")
+menuFrame.Size = UDim2.new(0, 300, 0, 500)
+menuFrame.Position = UDim2.new(0, 10, 0, 10)
+menuFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+menuFrame.Visible = false
+menuFrame.Parent = screenGui
+
+local menuCorner = Instance.new("UICorner")
+menuCorner.CornerRadius = UDim.new(0, 10)
+menuCorner.Parent = menuFrame
+
+-- Thêm ScrollingFrame để cuộn nội dung
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1, 0, 1, -50)
+scrollingFrame.Position = UDim2.new(0, 0, 0, 50)
+scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 1000)
+scrollingFrame.ScrollBarThickness = 8
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.Parent = menuFrame
+
+-- Thêm UIListLayout để sắp xếp các nút
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 5)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = scrollingFrame
+
+-- Header với nút đóng và FPS
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+header.Parent = menuFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 10)
+headerCorner.Parent = header
+
+-- Nút đóng menu
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 80, 0, 30)
+closeButton.Position = UDim2.new(1, -90, 0.5, -15)
+closeButton.Text = "Đóng"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 14
+closeButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+closeButton.Parent = header
+
+local closeButtonCorner = Instance.new("UICorner")
+closeButtonCorner.CornerRadius = UDim.new(0, 8)
+closeButtonCorner.Parent = closeButton
+
+-- Hiển thị FPS
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(0, 150, 0, 30)
+fpsLabel.Position = UDim2.new(0, 10, 0.5, -15)
+fpsLabel.Text = "FPS: Calculating..."
+fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+fpsLabel.Font = Enum.Font.GothamBold
+fpsLabel.TextSize = 14
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Parent = header
+
+-- Tạo nút mở menu
+local openButton = Instance.new("TextButton")
+openButton.Size = UDim2.new(0, 120, 0, 50)
+openButton.Position = UDim2.new(0, 10, 0, 10)
+openButton.Text = "Mở Menu"
+openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+openButton.Font = Enum.Font.GothamBold
+openButton.TextSize = 18
+openButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+openButton.Parent = screenGui
+
+local openButtonCorner = Instance.new("UICorner")
+openButtonCorner.CornerRadius = UDim.new(0, 10)
+openButtonCorner.Parent = openButton
+
+-- Chức năng mở và đóng menu
+openButton.MouseButton1Click:Connect(function()
+    menuFrame.Visible = true
+    openButton.Visible = false
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    menuFrame.Visible = false
+    openButton.Visible = true
+end)
+
+-- Tạo hàm tạo nút giảm lag
+local function createButton(name, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 280, 0, 40)
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    button.Parent = scrollingFrame
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = button
+
+    button.MouseButton1Click:Connect(callback)
+end
+
+-- Các tính năng giảm lag
+createButton("Tắt Hiệu Ứng Hình Ảnh", function()
+    for _, v in pairs(game.Lighting:GetChildren()) do
+        if v:IsA("PostEffect") then
+            v.Enabled = false
+        end
+    end
+end)
+
+createButton("Tắt Bóng Đổ", function()
+    game.Lighting.GlobalShadows = false
+end)
+
+createButton("Giảm Chất Lượng Đồ Họa", function()
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+end)
+
+createButton("Ẩn Người Chơi Khác", function()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            if player.Character then
+                player.Character:Destroy()
+            end
+        end
+    end
+end)
+
+createButton("Xóa Vật Thể Xa", function()
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj:IsA("Model") and obj:FindFirstChild("PrimaryPart") then
+            local distance = (obj.PrimaryPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if distance > 500 then
+                obj:Destroy()
+            end
+        end
+    end
+end)
+
+createButton("Ẩn Hiệu Ứng Lửa/Khói", function()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") then
+            v.Enabled = false
+        end
+    end
+end)
+
+createButton("Giảm Tầm Nhìn", function()
+    game.Lighting.FogEnd = 50
+end)
+
+createButton("Tắt Động Vật/Đồ Trang Trí", function()
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj.Name == "Animals" or obj.Name == "Decorations" then
+            obj:Destroy()
+        end
+    end
+end)
+
+createButton("Tắt Âm Thanh", function()
+    for _, sound in pairs(workspace:GetDescendants()) do
+        if sound:IsA("Sound") then
+            sound:Stop()
+        end
+    end
+end)
+
+createButton("Giảm Cường Độ Ánh Sáng", function()
+    game.Lighting.Brightness = 1
+    game.Lighting.ExposureCompensation = -1
+end)
+
+createButton("Tắt Hiệu Ứng Mờ (Blur)", function()
+    game.Lighting:ClearAllChildren()  -- Tắt tất cả hiệu ứng mờ
+end)
+
+createButton("Tắt Cảnh Quang", function()
+    game.Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+end)
+
+createButton("Giảm Chất Lượng Kết Cấu", function()
+    settings().Rendering.TextureQuality = Enum.TextureQuality.Level01
+end)
+
+createButton("Giảm Tốc Độ Động Vật", function()
+    for _, animal in pairs(workspace:GetChildren()) do
+        if animal:IsA("Model") and animal:FindFirstChild("Humanoid") then
+            animal.Humanoid.WalkSpeed = 5
+        end
+    end
+end)
+
+createButton("Giảm Quá Tải Người Chơi", function()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            player.Character:Destroy()
+        end
+    end
+end)
+
+createButton("Tắt Tiếng Nhạc", function()
+    for _, sound in pairs(workspace:GetDescendants()) do
+        if sound:IsA("Sound") and sound.Name == "Music" then
+            sound:Stop()
+        end
+    end
+end)
